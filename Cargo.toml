@@ -1,6 +1,6 @@
 [package]
 name = "rsomics-fcluster"
-version = "0.1.0"
+version = "0.1.1"
 description = "Form flat clusters from a hierarchical linkage matrix — scipy.cluster.hierarchy.fcluster (distance / maxclust / inconsistent / monocrit), integer-exact"
 edition = "2024"
 rust-version = "1.91"

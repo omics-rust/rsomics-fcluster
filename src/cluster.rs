@@ -121,6 +121,15 @@ fn cluster_maxclust_monocrit(z: &Linkage, mc: &[f64], max_nc: usize) -> Vec<i32>
     if max_nc >= n {
         return (1..=n as i32).collect();
     }
+    // scipy's binary search leaves upper_idx at n-1 when no split can honour a
+    // <=0 cluster budget, then reads MC[n-1] one past the length-(n-1) array —
+    // undefined behaviour that happens to yield the all-singletons partition.
+    // fcluster(Z, 0, 'maxclust') is documented to place every point in its own
+    // cluster, so form that DFS-ordered labelling directly (a cutoff below every
+    // monocrit value makes each leaf its own cluster).
+    if max_nc == 0 {
+        return cluster_monocrit(z, mc, f64::NEG_INFINITY);
+    }
 
     let mut visited = vec![false; 2 * n - 1];
     let mut curr = vec![0usize; n];
@@ -335,6 +344,23 @@ mod tests {
         // max_nc >= n short-circuits to singletons.
         assert_eq!(
             fcluster(&z, 12.0, Criterion::MaxClust, 2, None),
+            (1..=12).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn maxclust_zero_is_all_singletons() {
+        let z = ward_example();
+        // scipy fcluster(Z, 0, 'maxclust') -> every point its own cluster,
+        // numbered in DFS order (leaf order here). Must not panic.
+        assert_eq!(
+            fcluster(&z, 0.0, Criterion::MaxClust, 2, None),
+            (1..=12).collect::<Vec<_>>()
+        );
+        // A negative threshold saturates to max_nc = 0 through `t as usize`;
+        // scipy likewise yields the degenerate all-singletons partition.
+        assert_eq!(
+            fcluster(&z, -1.0, Criterion::MaxClust, 2, None),
             (1..=12).collect::<Vec<_>>()
         );
     }

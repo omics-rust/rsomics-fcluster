@@ -46,6 +46,12 @@ fn golden_labels_match_scipy() {
             "small_maxclust_6.expected",
             &["--threshold", "6", "--criterion", "maxclust"],
         ),
+        // Degenerate maxclust: t=0 requests at most zero clusters. scipy returns
+        // every point in its own cluster, labelled in DFS-reach order.
+        (
+            "small_maxclust_0.expected",
+            &["--threshold", "0", "--criterion", "maxclust"],
+        ),
         (
             "small_inconsistent_t1.2_d2.expected",
             &[
